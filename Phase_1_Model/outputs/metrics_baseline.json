@@ -1,0 +1,14 @@
+{
+  "dataset_rows": 5000,
+  "dataset_columns": 70,
+  "n_features_used": 66,
+  "train_f1": 0.9992922859164898,
+  "train_precision": 1.0,
+  "train_recall": 0.9985855728429985,
+  "cv_f1_mean": 0.7439939855728469,
+  "cv_f1_std": 0.02671778483255938,
+  "cv_f1_min": 0.7048458149779736,
+  "cv_f1_max": 0.773109243697479,
+  "max_depth": null,
+  "random_state": 1234
+}

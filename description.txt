@@ -1,0 +1,261 @@
+================================================================================
+MLC CHURN PREDICTION - SO SÁNH BA ĐỀ BÀI (PHASE 1, 2, 3)
+================================================================================
+
+TỔNG QUAN:
+Ba đề bài hoàn toàn khác nhau, tiến triển từ đơn giản đến phức tạp.
+
+================================================================================
+BẢNG SO SÁNH CHI TIẾT:
+================================================================================
+
+                    | PHASE 1 (ĐỀ 1)  | PHASE 2 - CRD   | PHASE 3 - CRFD
+                    |                 | (ĐỀ 2)          | (ĐỀ 3)
+--------------------|-----------------|-----------------|------------------
+ĐIỂM                | 2 điểm          | 3 điểm          | 4 điểm
+MỤC TIÊU            | Xây dựng 1      | Thí nghiệm 1    | Thí nghiệm 2
+                    | mô hình         | yếu tố (k)      | yếu tố (k +
+                    |                 |                 | max_depth)
+SỐ LẦN CHẠY         | 1 lần           | 30 lần          | 90 lần
+                    | (mô hình duy    | (3 k × 10       | (3 k × 3
+                    | nhất)           | repeats)        | max_depth × 10)
+YẾU TỐ THAY ĐỔI     | Không, dùng     | k thay đổi:     | k thay đổi:
+                    | max_depth       | 3, 5, 10        | 3, 5, 10
+                    | mặc định (None) | max_depth = None| max_depth: 3,
+                    |                 | (cố định)       | 5, None
+KIỂM TRA            | Không ANOVA     | Levene test     | ANOVA 2 chiều
+THỐNG KÊ            |                 | ANOVA 1 chiều   | (main effects +
+                    |                 | Tukey HSD       | interaction)
+TƯƠNG TÁC           | Không           | Không xét       | CÓ xét k ×
+                    |                 |                 | max_depth
+BIỂU ĐỒ             | Feature         | Box plot / Bar   | Main effects +
+                    | importance      | plot: 3 nhóm    | Interaction plot
+                    | Confusion matrix| với CI 95%      | Heatmap
+
+================================================================================
+1. PHASE 1: XÂY DỰNG MÔ HÌNH (2 ĐIỂM)
+================================================================================
+
+Mục Tiêu:
+- Xây dựng 1 mô hình Random Forest duy nhất
+- Phân tích đặc trưng và loại bỏ biến không cần thiết
+- Báo cáo hiệu suất mô hình
+
+Công Việc:
+1. Tải và xử lý dữ liệu
+2. Phân tích tương quan (correlation analysis)
+3. Loại bỏ đặc trưng dư thừa (correlation > 0.95)
+4. Xây dựng Random Forest với max_depth = None (mặc định)
+5. Đánh giá: F1 score, precision, recall, feature importance
+6. Cross-validation (5-fold stratified)
+
+Số Lần Huấn Luyện: 1 mô hình duy nhất
+
+Kết Quả:
+- 1 giá trị F1 score (hoặc trung bình từ cross-validation)
+- Feature importance plot
+- Confusion matrix
+- Danh sách đặc trưng được giữ lại
+
+================================================================================
+2. PHASE 2: THÍ NGHIỆM CRD (3 ĐIỂM)
+================================================================================
+
+Mục Tiêu:
+- So sánh ảnh hưởng của k (số fold) lên hiệu suất
+- Thiết kế thí nghiệm ngẫu nhiên hoàn toàn (CRD)
+
+Công Việc:
+1. Huấn luyện 30 mô hình (3 k-values × 10 repeats):
+   - k = 3, 5, 10
+   - max_depth = None (mặc định, cố định)
+   - Mỗi lần: stratified k-fold cross-validation
+
+2. Thu thập 30 giá trị F1 score:
+   - 10 giá trị từ k=3
+   - 10 giá trị từ k=5
+   - 10 giá trị từ k=10
+
+3. Kiểm tra thống kê 2 phần:
+   
+   PHẦN 1 (1 điểm): So sánh PHƯƠNG SAI
+   - Sử dụng: Levene's test
+   - Câu hỏi: Phương sai F1 có khác nhau giữa 3 nhóm k không?
+   - Báo cáo: Test statistic, p-value, kết luận
+   
+   PHẦN 2 (2 điểm): Đánh giá ẢNH HƯỞNG của k
+   - Sử dụng: One-way ANOVA + Tukey HSD
+   - Câu hỏi: k có ảnh hưởng đáng kể đến F1 không?
+   - Báo cáo:
+     * Trung bình F1 cho mỗi k (với 95% CI)
+     * ANOVA table (F-statistic, p-value)
+     * Tukey HSD: so sánh từng cặp (3 vs 5, 3 vs 10, 5 vs 10)
+     * Biểu đồ: Box plot hoặc Bar plot với error bar
+
+Số Lần Huấn Luyện: 30 mô hình (3 × 10)
+
+Kết Quả:
+- File: crd_results.csv (30 hàng)
+- Levene test p-value
+- ANOVA F-statistic và p-value
+- Tukey HSD comparison
+- Biểu đồ so sánh 3 nhóm
+
+================================================================================
+3. PHASE 3: THÍ NGHIỆM CRFD (4 ĐIỂM)
+================================================================================
+
+Mục Tiêu:
+- So sánh ảnh hưởng của k VÀ max_depth
+- Kiểm tra TƯƠNG TÁC giữa hai yếu tố
+- Thiết kế giai thừa 2 yếu tố (CRFD)
+
+Công Việc:
+1. Huấn luyện 90 mô hình (3 k × 3 max_depth × 10 repeats):
+   
+   Yếu tố A (k): 3, 5, 10
+   Yếu tố B (max_depth): 3, 5, None
+   
+   Kết hợp (9 tổ hợp):
+   - (k=3, max_depth=3) → 10 mô hình
+   - (k=3, max_depth=5) → 10 mô hình
+   - (k=3, max_depth=None) → 10 mô hình
+   - (k=5, max_depth=3) → 10 mô hình
+   - (k=5, max_depth=5) → 10 mô hình
+   - (k=5, max_depth=None) → 10 mô hình
+   - (k=10, max_depth=3) → 10 mô hình
+   - (k=10, max_depth=5) → 10 mô hình
+   - (k=10, max_depth=None) → 10 mô hình
+
+2. Thu thập 90 giá trị F1 score
+
+3. Kiểm tra thống kê 2 phần:
+   
+   PHẦN 1 (3 điểm): Đánh giá ẢNH HƯỞNG chính
+   - Sử dụng: Two-way ANOVA
+   - Câu hỏi 1: k có ảnh hưởng đáng kể đến F1 không?
+   - Câu hỏi 2: max_depth có ảnh hưởng đáng kể đến F1 không?
+   - Báo cáo:
+     * Trung bình F1 cho mỗi k (với 95% CI)
+     * Trung bình F1 cho mỗi max_depth (với 95% CI)
+     * ANOVA table: 3 hàng (k, max_depth, interaction)
+     * Kích thước hiệu ứng (partial η²)
+     * Biểu đồ main effects: 2 biểu đồ riêng
+   
+   PHẦN 2 (1 điểm): Phân tích TƯƠNG TÁC
+   - Câu hỏi: k và max_depth có TƯƠNG TÁC không?
+   - Báo cáo:
+     * Interaction test p-value
+     * Giải thích tự nhiên của tương tác
+     * Biểu đồ tương tác:
+       - Trục x = max_depth, các đường = k (hoặc ngược lại)
+       - Các đường song song = không tương tác
+       - Các đường cắt nhau = có tương tác
+     * Kích thước hiệu ứng (partial η²)
+
+Số Lần Huấn Luyện: 90 mô hình (3 × 3 × 10)
+
+Kết Quả:
+- File: crfd_results.csv (90 hàng)
+- ANOVA table (main effects + interaction)
+- Main effects plots
+- Interaction plot(s)
+- Heatmap: trung bình F1 cho tất cả 9 kết hợp
+
+================================================================================
+TIẾN TRIỂN QUA BA PHASE:
+================================================================================
+
+PHASE 1 (Cơ Bản):
+  → Xây dựng 1 mô hình
+  → Loại bỏ đặc trưng không cần thiết
+  → Báo cáo hiệu suất
+
+           ↓
+
+PHASE 2 (Mở Rộng - 1 Yếu Tố):
+  → Dùng mô hình từ Phase 1
+  → THAY ĐỔI k: 3, 5, 10
+  → Giữ nguyên max_depth
+  → Huấn luyện 30 mô hình
+  → So sánh ảnh hưởng của k (Levene + ANOVA 1D + Tukey)
+
+           ↓
+
+PHASE 3 (Mở Rộng - 2 Yếu Tố + Tương Tác):
+  → Dùng mô hình từ Phase 1
+  → THAY ĐỔI cả k AND max_depth
+  → Huấn luyện 90 mô hình (3 × 3 × 10)
+  → So sánh ảnh hưởng của k (main effect)
+  → So sánh ảnh hưởng của max_depth (main effect)
+  → So sánh TƯƠNG TÁC k × max_depth (NEW!)
+  → ANOVA 2 chiều + Interaction plot
+
+================================================================================
+KHÁC BIỆT VỀ KỸ THUẬT THỐNG KÊ:
+================================================================================
+
+PHASE 1:
+  - Không dùng ANOVA
+  - Chỉ báo cáo 1 mô hình
+
+PHASE 2:
+  - Levene test: kiểm tra đồng nhất phương sai
+  - One-way ANOVA: kiểm tra 1 yếu tố (k)
+  - Tukey HSD: so sánh từng cặp
+  - Công thức: F1_score ~ k
+
+PHASE 3:
+  - Two-way ANOVA: kiểm tra 2 yếu tố (k + max_depth)
+  - Kiểm tra tương tác (k × max_depth)
+  - Main effects plots: hiển thị ảnh hưởng của mỗi yếu tố
+  - Interaction plot: hiển thị cách 2 yếu tố kết hợp
+  - Công thức: F1_score ~ k + max_depth + k:max_depth
+
+================================================================================
+VÍ DỤ KẾT QUẢ:
+================================================================================
+
+PHASE 1:
+  Random Forest Model Performance:
+  - F1 Score: 0.62
+  - Precision: 0.65
+  - Recall: 0.60
+  - Top 3 Features: customer_service_calls, account_length, total_day_minutes
+
+PHASE 2:
+  CRD Results (Levene + ANOVA + Tukey):
+  - k=3: Mean F1 = 0.55 (SD=0.045, 95% CI: [0.534-0.566])
+  - k=5: Mean F1 = 0.58 (SD=0.042, 95% CI: [0.564-0.596])
+  - k=10: Mean F1 = 0.62 (SD=0.048, 95% CI: [0.602-0.638])
+  - ANOVA: F(2,27) = 5.43, p = 0.012 → k có ảnh hưởng đáng kể!
+  - Tukey HSD: k=10 > k=3 (p=0.008), k=10 > k=5 (p=0.031)
+
+PHASE 3:
+  CRFD Results (Two-way ANOVA + Interaction):
+  - k effect: F(2,81) = 4.82, p = 0.010 → Đáng kể
+  - max_depth effect: F(2,81) = 8.51, p < 0.001 → Đáng kể
+  - k × max_depth interaction: F(4,81) = 1.23, p = 0.302 → Không đáng kể
+  
+  Kết Quả Cụ Thể:
+  - k=3, max_depth=3: Mean F1 = 0.550
+  - k=3, max_depth=5: Mean F1 = 0.580
+  - k=3, max_depth=None: Mean F1 = 0.600
+  - k=5, max_depth=3: Mean F1 = 0.562
+  - k=5, max_depth=5: Mean F1 = 0.592
+  - k=5, max_depth=None: Mean F1 = 0.612
+  - k=10, max_depth=3: Mean F1 = 0.575
+  - k=10, max_depth=5: Mean F1 = 0.605
+  - k=10, max_depth=None: Mean F1 = 0.625
+
+================================================================================
+TÓM LẠI:
+================================================================================
+
+Phase 1 → Xây dựng mô hình cơ sở (1 mô hình, 2 điểm)
+Phase 2 → So sánh 1 yếu tố (k): 30 mô hình, 3 điểm
+Phase 3 → So sánh 2 yếu tố + tương tác: 90 mô hình, 4 điểm
+
+Mỗi phase xây dựng dựa trên phase trước!
+
+================================================================================
