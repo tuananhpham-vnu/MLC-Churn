@@ -1,354 +1,449 @@
 # Dự Đoán Churn Khách Hàng MLC - Thiết Kế và Phân Tích Thực Nghiệm
 
 **Môn học:** Thiết kế và phân tích thực nghiệm  
-**Bộ dữ liệu:** mlc_churn - Dự đoán rời mạng khách hàng viễn thông  
-**Tổng điểm:** 10 điểm
+**Bộ dữ liệu:** `mlc_churn.csv` - dự đoán khách hàng viễn thông rời mạng  
+**Thuật toán sử dụng:** Random Forest  
+**Random seed:** `1234`  
+**Chỉ số đánh giá chính:** F1-score với lớp dương là `yes`
 
 ---
 
-## Tổng Quan Dự Án
+## 1. Tổng quan dự án
 
-Dự án này thực hiện một nghiên cứu máy học toàn diện về dự đoán khách hàng rời mạng sử dụng thuật toán Random Forest. Công việc bao gồm:
-- Xây dựng mô hình dự đoán
-- Thực hiện hai thiết kế thực nghiệm (CRD và CRFD)
-- Phân tích thống kê kết quả
-- Viết báo cáo chi tiết
+Dự án xây dựng và đánh giá mô hình dự đoán khách hàng rời mạng trên bộ dữ liệu `mlc_churn`. Mô hình chính là **Random Forest**, trong đó chỉ thay đổi siêu tham số `max_depth` và giữ các siêu tham số còn lại ở giá trị mặc định.
 
-**Ngôn ngữ lập trình:** Python 3.x  
-**Random Seed:** 1234 (tất cả thực nghiệm)  
-**Chỉ số đánh giá:** F1 Score (lớp dương = "yes")
+Các nội dung chính gồm:
 
----
-
-## Tóm Tắt Bộ Dữ Liệu
-
-**File:** `mlc_churn.csv`
-
-### Các Đặc Trưng:
-- **Địa lý:** state, area_code
-- **Thông tin tài khoản:** account_length, international_plan, voice_mail_plan
-- **Thư thoại di động:** number_vmail_messages
-- **Sử dụng ban ngày:** total_day_minutes, total_day_calls, total_day_charge
-- **Sử dụng ban tối:** total_eve_minutes, total_eve_calls, total_eve_charge
-- **Sử dụng ban đêm:** total_night_minutes, total_night_calls, total_night_charge
-- **Sử dụng quốc tế:** total_intl_minutes, total_intl_calls, total_intl_charge
-- **Dịch vụ khách hàng:** number_customer_service_calls
-- **Biến mục tiêu:** churn (yes/no)
+- Khám phá và tiền xử lý dữ liệu.
+- Phân tích tương quan và ý nghĩa thực tiễn của biến.
+- Xây dựng mô hình Random Forest dự đoán churn.
+- Đánh giá mô hình bằng F1-score cho lớp `yes`.
+- Thiết kế và phân tích thực nghiệm bằng CRD và CRFD.
+- Phân tích kết quả bằng mô hình hồi quy tuyến tính `lm()` và báo cáo giá trị trung bình, khoảng tin cậy.
 
 ---
 
-## Cấu Trúc Dự Án
+## 2. Tóm tắt bộ dữ liệu
 
-```
+**File dữ liệu gốc:** `mlc_churn.csv`
+
+### 2.1. Các nhóm biến chính
+
+- **Địa lý:** `state`, `area_code`
+- **Thông tin tài khoản:** `account_length`, `international_plan`, `voice_mail_plan`
+- **Thư thoại:** `number_vmail_messages`
+- **Sử dụng ban ngày:** `total_day_minutes`, `total_day_calls`, `total_day_charge`
+- **Sử dụng buổi tối:** `total_eve_minutes`, `total_eve_calls`, `total_eve_charge`
+- **Sử dụng ban đêm:** `total_night_minutes`, `total_night_calls`, `total_night_charge`
+- **Sử dụng quốc tế:** `total_intl_minutes`, `total_intl_calls`, `total_intl_charge`
+- **Dịch vụ khách hàng:** `number_customer_service_calls`
+- **Biến mục tiêu:** `churn` (`yes`/`no`)
+
+### 2.2. Biến mục tiêu
+
+Biến cần dự đoán là `churn`, trong đó:
+
+- `yes`: khách hàng rời mạng, là lớp dương.
+- `no`: khách hàng không rời mạng.
+
+Vì bài toán quan tâm đến việc phát hiện khách hàng có khả năng rời mạng, F1-score được tính với **positive class = `yes`**.
+
+---
+
+## 3. Cấu trúc thư mục dự án
+
+```text
 2026.DAE.MLC Churn/
-├── README.md                           # File này - Kế hoạch dự án chính
-├── mlc_churn.csv                       # Bộ dữ liệu
+├── README.md
+├── mlc_churn.csv
 │
-├── Phase_0_EDA/                        # Khám phá dữ liệu & Xử lý trước
-│   ├── README.md                       # Hướng dẫn Phase 0
-│   ├── 00_eda_baseline.py              # EDA cơ bản
-│   └── 00_eda_improved.py              # EDA nâng cao với biểu đồ
+├── Phase_0_EDA/
+│   ├── README.md
+│   ├── 00_eda_baseline.py
+│   ├── 00_eda_improved.py
+│   └── outputs/
+│       └── preprocessed_improved.csv
 │
-├── Phase_1_Model/                      # Mô hình Random Forest cơ sở
-│   ├── README.md                       # Hướng dẫn Phase 1
-│   ├── 01_model_baseline.py            # Xây dựng mô hình RF cơ bản với phân tích tương quan
-│   └── 01_model_improved.py            # Tối ưu hóa mô hình và chọn lọc đặc trưng
+├── Phase_1_Model/
+│   ├── README.md
+│   ├── 01_model_baseline.py
+│   ├── 01_model_improved.py
+│   └── outputs/
 │
-├── Phase_2_CRD/                        # Thực nghiệm CRD (Thiết kế ngẫu nhiên hoàn toàn)
-│   ├── README.md                       # Hướng dẫn Phase 2
-│   ├── 02_crd_baseline.py              # CRD cơ bản với k-fold lặp lại
-│   ├── 02_crd_improved.py              # CRD nâng cao với xác thực
-│   ├── 02_crd_analysis.py              # Phân tích thống kê (leveneTest, TukeyHSD)
-│   └── crd_results.csv                 # Kết quả: Kết quả thực nghiệm CRD
+├── Phase_2_CRD/
+│   ├── README.md
+│   ├── 02_crd_baseline.py
+│   ├── 02_crd_improved.py
+│   ├── 02_crd_analysis.py
+│   └── crd_results.csv
 │
-├── Phase_3_CRFD/                       # Thực nghiệm CRFD (Thiết kế giai thừa ngẫu nhiên hoàn toàn)
-│   ├── README.md                       # Hướng dẫn Phase 3
-│   ├── 03_crfd_baseline.py             # CRFD cơ bản với hai yếu tố
-│   ├── 03_crfd_improved.py             # CRFD nâng cao với xác thực
-│   ├── 03_crfd_analysis.py             # Phân tích thống kê (hiệu ứng tương tác)
-│   └── crfd_results.csv                # Kết quả: Kết quả thực nghiệm CRFD
+├── Phase_3_CRFD/
+│   ├── README.md
+│   ├── 03_crfd_baseline.py
+│   ├── 03_crfd_improved.py
+│   ├── 03_crfd_analysis.py
+│   └── crfd_results.csv
 │
-├── Phase_4_Report/                     # Viết Báo Cáo
-│   ├── README.md                       # Hướng dẫn Phase 4
-│   ├── 04_report_generator.py          # Tạo biểu đồ báo cáo và thống kê
-│   ├── report_template.md              # Mẫu báo cáo markdown
-│   ├── generated_figures/              # Kết quả: Biểu đồ phân tích
-│   └── MLC_Churn_Report.pdf            # Báo cáo PDF cuối cùng (sẽ tạo)
+├── Phase_4_Report/
+│   ├── README.md
+│   ├── 04_report_generator.py
+│   ├── report_template.md
+│   ├── generated_figures/
+│   └── MLC_Churn_Report.pdf
 │
 └── outputs/
-    ├── models/                         # File mô hình lưu trữ
-    ├── results/                        # File CSV kết quả
-    └── figures/                        # Biểu đồ được tạo
+    ├── models/
+    ├── results/
+    └── figures/
 ```
 
 ---
 
-## Phân Tích Từng Giai Đoạn
+## 4. Giải thích các cách đánh giá mô hình
 
-### **Phase 0: Khám Phá Dữ Liệu & Xử Lý Trước** (Bắt buộc)
-**Mục tiêu:** Hiểu cấu trúc dữ liệu, xử lý giá trị thiếu, chuẩn bị cho mô hình hóa
+### 4.1. Holdout
 
-**Kết quả giao hàng:**
-- Tóm tắt và thống kê dữ liệu
-- Phân tích giá trị thiếu
-- Tương quan đặc trưng
-- Phân bố lớp (cân bằng churn)
-- Quy trình xử lý trước dữ liệu
+**Holdout** là cách chia dữ liệu một lần thành tập huấn luyện và tập kiểm tra. Ví dụ:
 
-**File:**
-- `Phase_0_EDA/00_eda_baseline.py` - Khám phá cơ bản
-- `Phase_0_EDA/00_eda_improved.py` - Trực quan hóa nâng cao
+```text
+80% dữ liệu -> train
+20% dữ liệu -> holdout/test
+```
 
----
+Mô hình học trên tập train và được đánh giá trên tập holdout. F1 trên tập này được gọi là **Holdout F1**. Cách này dễ hiểu nhưng kết quả có thể phụ thuộc vào cách chia dữ liệu.
 
-### **Phase 1: Mô Hình Random Forest Cơ Sở** (2 điểm)
-**Mục tiêu:** Xây dựng mô hình dự đoán ban đầu và phân tích tầm quan trọng của đặc trưng
+### 4.2. Cross-validation
 
-**Yêu cầu:**
-- Sử dụng thuật toán Random Forest
-- Phân tích tương quan giữa các đặc trưng
-- Loại bỏ các đặc trưng không liên quan dựa trên tương quan & ý nghĩa thực tế
-- Chỉ sử dụng `max_depth` là siêu tham số (các cái khác mặc định)
-- Random seed = 1234
-- Đánh giá với F1 score (lớp dương = "yes")
+**Cross-validation** hay **CV** là cách chia dữ liệu thành nhiều fold. Với k-fold CV, mô hình được huấn luyện và kiểm tra nhiều lần, mỗi lần dùng một fold làm tập kiểm tra và các fold còn lại làm tập huấn luyện.
 
-**Cách tiếp cận cơ bản:**
-1. Tải và xử lý trước dữ liệu
-2. Tính toán tương quan đặc trưng
-3. Loại bỏ các đặc trưng tương quan cao
-4. Huấn luyện RF với siêu tham số mặc định
-5. Đánh giá hiệu năng mô hình
+Ví dụ với 5-fold CV:
 
-**Cải tiến:**
-1. Phân tích tầm quan trọng của đặc trưng
-2. Các ngưỡng tương quan khác nhau
-3. Xác thực chéo mô hình
-4. Khám phá mở rộng tính năng
+```text
+Lần 1: Fold 1 test, Fold 2-5 train
+Lần 2: Fold 2 test, Fold 1,3,4,5 train
+...
+Lần 5: Fold 5 test, Fold 1-4 train
+```
 
-**File:**
-- `Phase_1_Model/01_model_baseline.py` - Mô hình cơ bản
-- `Phase_1_Model/01_model_improved.py` - Phiên bản cải tiến
+Kết quả cuối cùng thường được báo cáo bằng trung bình F1 và độ lệch chuẩn hoặc khoảng tin cậy. Trong báo cáo, **CV F1 mean** nên được ưu tiên hơn một lần holdout vì phản ánh hiệu năng ổn định hơn.
 
 ---
 
-### **Phase 2: Thực Nghiệm CRD** (3 điểm)
-**Mục tiêu:** Thiết kế và phân tích thực nghiệm hoàn toàn ngẫu nhiên với các giá trị k-fold khác nhau
+## 5. Phase 0: EDA và tiền xử lý dữ liệu
 
-**Thiết kế thực nghiệm:**
-- Phương pháp: Xác thực chéo k-fold lặp lại
-- Giá trị k: 3, 5, 10
-- Lần lặp lại: 10
-- Chiến lược fold: Phân tầng (xử lý mất cân bằng lớp)
-- Random seed: 1234
+**Mục tiêu:** hiểu dữ liệu, kiểm tra chất lượng dữ liệu và chuẩn bị dữ liệu cho mô hình.
 
-**Yêu cầu:**
+Các công việc chính:
 
-1. **So sánh Phương sai (1 điểm)**
-   - Sử dụng test Levene để so sánh phương sai F1 trên các giá trị k khác nhau
-   - Báo cáo thống kê kiểm tra và giá trị p
-   - Kết luận về tính đồng nhất của phương sai
+1. Đọc dữ liệu `mlc_churn.csv`.
+2. Kiểm tra số dòng, số cột, kiểu dữ liệu.
+3. Kiểm tra giá trị thiếu.
+4. Phân tích phân bố biến mục tiêu `churn`.
+5. Phân tích tương quan giữa các biến định lượng.
+6. Mã hóa biến phân loại.
+7. Lưu dữ liệu đã tiền xử lý vào:
 
-2. **Đánh giá Tác động của k (2 điểm)**
-   - Phân tích tác động của k đến hiệu suất mô hình
-   - Thực hiện kiểm tra hậu hoc Tukey HSD để so sánh từng cặp
-   - Tạo biểu đồ so sánh (3 nhóm)
-   - Báo cáo giá trị trung bình và khoảng tin cậy
+```text
+Phase_0_EDA/outputs/preprocessed_improved.csv
+```
 
-**Cách tiếp cận cơ bản:**
-1. Thiết lập k-fold lặp lại với k={3,5,10}, lần lặp=10
-2. Huấn luyện mô hình RF trên mỗi kết hợp fold
-3. Thu thập điểm số F1
-4. Thực hiện kiểm tra Levene
-5. Tiến hành ANOVA một chiều và Tukey HSD
-6. Tạo biểu đồ so sánh
+**File chính:**
 
-**Cải tiến:**
-1. Xác minh k-fold phân tầng
-2. So sánh kiểm tra thống kê đa lần
-3. Phân tích lỗi theo cấu hình fold
-4. Biểu đồ hộp và biểu đồ violin
-5. Phân tích quyền lực thống kê
-
-**File:**
-- `Phase_2_CRD/02_crd_baseline.py` - Thực nghiệm CRD cơ bản
-- `Phase_2_CRD/02_crd_improved.py` - Xác thực nâng cao
-- `Phase_2_CRD/02_crd_analysis.py` - Phân tích thống kê
-- Kết quả: `Phase_2_CRD/crd_results.csv`
+- `Phase_0_EDA/00_eda_baseline.py`
+- `Phase_0_EDA/00_eda_improved.py`
 
 ---
 
-### **Phase 3: Thực Nghiệm CRFD** (4 điểm)
-**Mục tiêu:** Phân tích tương tác giữa k và max_depth bằng thiết kế giai thừa
+## 6. Phase 1: Xây dựng mô hình Random Forest
 
-**Thiết kế thực nghiệm:**
-- Yếu tố: 
-  - Yếu tố A (k): 3, 5, 10
-  - Yếu tố B (max_depth): 3, 5, Không giới hạn
-- Lần lặp lại: 10
-- Chiến lược fold: Phân tầng
-- Random seed: 1234
-- Tổng kết hợp: 3 × 3 × 10 = 90 thực nghiệm
+**Mục tiêu:** xây dựng mô hình dự đoán churn bằng Random Forest và đánh giá hiệu năng ban đầu.
 
-**Yêu cầu:**
+### 6.1. Yêu cầu chính
 
-1. **Phân tích Hiệu ứng Chính (3 điểm)**
-   - Đánh giá tác động của k đến hiệu suất mô hình (với trung bình và CI)
-   - Đánh giá tác động của max_depth đến hiệu suất mô hình (với trung bình và CI)
-   - Tạo biểu đồ cho thấy hiệu ứng chính
-   - Kiểm tra ý nghĩa thống kê
+- Sử dụng thuật toán Random Forest.
+- Chỉ thay đổi siêu tham số `max_depth`.
+- Giữ các siêu tham số khác ở giá trị mặc định.
+- Sử dụng `random_state=1234`.
+- Đánh giá bằng F1-score với lớp dương là `yes`.
+- Phân tích sử dụng hoặc loại bỏ biến dựa trên tương quan và ý nghĩa thực tiễn.
 
-2. **Phân tích Tương tác (1 điểm)**
-   - Kiểm tra ý nghĩa thống kê của tương tác k × max_depth
-   - Trực quan hóa biểu đồ tương tác
-   - Mô tả ảnh hưởng tương tác đến hiệu suất mô hình (nếu có)
-   - Phân tích tác động thực tế
+### 6.2. Kết quả baseline/improved hiện tại
 
-**Cách tiếp cận cơ bản:**
-1. Thiết lập thiết kế giai thừa 2 yếu tố với tất cả kết hợp
-2. Huấn luyện mô hình RF cho mỗi kết hợp (với k-fold phân tầng, lặp=10)
-3. Thu thập điểm số F1 (9 × 10 = 90 quan sát)
-4. Thực hiện ANOVA hai chiều
-5. Phân tích hiệu ứng chính và tương tác
+Kết quả chạy mô hình hiện tại:
 
-**Cải tiến:**
-1. Ước tính kích thước hiệu ứng
-2. Biểu đồ chẩn đoán mô hình (phần dư, QQ-plot)
-3. Phương pháp so sánh đa lần
-4. Kiểm tra độ bền
-5. Gợi ý cấu hình tốt nhất
+```text
+Features used: 66
+Train F1: 0.999292
+CV F1 mean +/- std: 0.743994 +/- 0.026718
+Holdout F1: 0.791667
+CV F1 mean (95% CI): 0.743994 [0.710819, 0.777168]
+```
 
-**File:**
-- `Phase_3_CRFD/03_crfd_baseline.py` - Thực nghiệm CRFD cơ bản
-- `Phase_3_CRFD/03_crfd_improved.py` - Xác thực nâng cao
-- `Phase_3_CRFD/03_crfd_analysis.py` - Phân tích thống kê
-- Kết quả: `Phase_3_CRFD/crfd_results.csv`
+Diễn giải:
+
+- F1 trên tập train gần bằng 1, cho thấy mô hình học rất tốt trên dữ liệu huấn luyện.
+- CV F1 trung bình khoảng `0.744`, phản ánh hiệu năng tổng quát hóa ổn định hơn.
+- Holdout F1 khoảng `0.792`, cao hơn trung bình CV, có thể do tập holdout dễ hơn một số fold trong CV.
+- Chênh lệch lớn giữa Train F1 và CV F1 cho thấy mô hình có dấu hiệu **overfitting**.
+
+Vì vậy, không nên chỉ nhìn vào Train F1. Khi chọn mô hình, nên ưu tiên **CV F1 mean** và khoảng tin cậy.
+
+### 6.3. So sánh baseline và improved bằng `lm()`
+
+Khoảng tin cậy 95% cho hệ số hồi quy:
+
+```text
+                    2.5 %     97.5 %
+(Intercept)    0.71644056 0.77154741
+modelimproved -0.03896642 0.03896642
+```
+
+Diễn giải:
+
+- `(Intercept)` là F1 trung bình ước lượng của mô hình mốc, thường là baseline.
+- Hệ số `modelimproved` biểu diễn chênh lệch F1 giữa improved và baseline.
+- Khoảng tin cậy của `modelimproved` là `[-0.03897, 0.03897]`, có chứa 0.
+
+Kết luận: chưa có bằng chứng thống kê rõ ràng để khẳng định mô hình improved tốt hơn baseline. Có thể viết trong báo cáo rằng improved và baseline có hiệu năng tương đương, hoặc sự khác biệt chưa có ý nghĩa thống kê.
+
+### 6.4. So sánh các giá trị `max_depth`
+
+Kết quả thực nghiệm hiện tại:
+
+| max_depth | CV F1 mean | Holdout F1 | Train F1 |
+|---:|---:|---:|---:|
+| None | 0.728707 | 0.791667 | 1.000000 |
+| 10 | 0.592736 | 0.614634 | 0.788009 |
+| 7 | 0.296547 | 0.236025 | 0.459864 |
+| 5 | 0.027472 | 0.094595 | 0.135091 |
+| 3 | 0.000000 | 0.014085 | 0.000000 |
+
+Nhận xét:
+
+- `max_depth=None` đạt CV F1 mean cao nhất, nên là cấu hình tốt nhất theo tiêu chí F1 trung bình trên CV.
+- Tuy nhiên, Train F1 = 1.0 cho thấy mô hình có dấu hiệu overfitting.
+- `max_depth=10` ít overfit hơn nhưng CV F1 thấp hơn khá nhiều.
+- Các giá trị `max_depth=3`, `5`, `7` quá nông, khiến mô hình khó nhận diện lớp `yes`, làm F1 rất thấp.
+
+Kết luận tạm thời:
+
+```text
+Cấu hình tốt nhất theo CV F1 mean: max_depth=None
+```
+
+Tuy nhiên, khi trình bày trong báo cáo cần nêu rõ rủi ro overfitting và đề xuất hướng cải thiện như xử lý mất cân bằng lớp, thử thêm kỹ thuật regularization hoặc cân nhắc class weight trong các phân tích mở rộng.
+
+**File chính:**
+
+- `Phase_1_Model/01_model_baseline.py`
+- `Phase_1_Model/01_model_improved.py`
 
 ---
 
-### **Phase 4: Viết Báo Cáo** (1 điểm)
-**Mục tiêu:** Tổng hợp tất cả các phát hiện thành báo cáo PDF toàn diện
+## 7. Phase 2: Thực nghiệm CRD
 
-**Cấu trúc báo cáo:**
+**CRD** là viết tắt của **Completely Randomized Design**, tức thiết kế ngẫu nhiên hoàn toàn.
+
+### 7.1. Mục tiêu
+
+Đánh giá ảnh hưởng của số fold `k` trong k-fold cross-validation đến F1-score của mô hình.
+
+### 7.2. Thiết kế thực nghiệm
+
+- Yếu tố nghiên cứu: số fold `k`.
+- Các mức của yếu tố: `k = 3`, `5`, `10`.
+- Số lần lặp: `10`.
+- Mô hình: Random Forest.
+- Chỉ số đánh giá: F1-score với lớp dương là `yes`.
+- Chiến lược chia fold: stratified k-fold để giữ tỷ lệ lớp `yes`/`no` tương đối ổn định giữa các fold.
+- Random seed: `1234`.
+
+### 7.3. Phân tích thống kê
+
+Các bước phân tích:
+
+1. Tính F1-score cho từng lần lặp và từng giá trị `k`.
+2. Báo cáo trung bình, độ lệch chuẩn và khoảng tin cậy 95%.
+3. Dùng Levene test để kiểm tra giả định đồng nhất phương sai.
+4. Dùng mô hình hồi quy tuyến tính hoặc ANOVA một yếu tố để kiểm tra ảnh hưởng của `k`.
+5. Nếu có khác biệt đáng kể, dùng Tukey HSD để so sánh từng cặp.
+
+Công thức mô hình có thể viết:
+
+```text
+F1 ~ k
+```
+
+### 7.4. Kết quả cần báo cáo
+
+- Bảng trung bình F1 theo từng giá trị `k`.
+- Khoảng tin cậy 95% cho từng giá trị `k`.
+- Kết quả Levene test.
+- Kết quả ANOVA hoặc `lm()`.
+- Kết quả Tukey HSD nếu cần.
+- Biểu đồ boxplot hoặc mean plot có CI.
+
+**File chính:**
+
+- `Phase_2_CRD/02_crd_baseline.py`
+- `Phase_2_CRD/02_crd_improved.py`
+- `Phase_2_CRD/02_crd_analysis.py`
+- `Phase_2_CRD/crd_results.csv`
+
+---
+
+## 8. Phase 3: Thực nghiệm CRFD
+
+**CRFD** là viết tắt của **Completely Randomized Factorial Design**, tức thiết kế giai thừa ngẫu nhiên hoàn toàn.
+
+### 8.1. Mục tiêu
+
+Phân tích đồng thời ảnh hưởng của hai yếu tố `k` và `max_depth` đến F1-score, đồng thời kiểm tra xem hai yếu tố này có tương tác với nhau hay không.
+
+### 8.2. Thiết kế thực nghiệm
+
+- Yếu tố A: số fold `k`
+  - Các mức: `3`, `5`, `10`
+- Yếu tố B: `max_depth`
+  - Các mức: `3`, `5`, `None`
+- Số lần lặp: `10`
+- Tổng số quan sát: `3 × 3 × 10 = 90`
+- Chỉ số đánh giá: F1-score với lớp dương là `yes`
+- Random seed: `1234`
+
+### 8.3. Phân tích thống kê
+
+Mô hình phân tích:
+
+```text
+F1 ~ k + max_depth + k:max_depth
+```
+
+Trong đó:
+
+- `k`: hiệu ứng chính của số fold.
+- `max_depth`: hiệu ứng chính của độ sâu cây.
+- `k:max_depth`: hiệu ứng tương tác giữa số fold và độ sâu cây.
+
+Các nội dung cần phân tích:
+
+1. Ảnh hưởng chính của `k` đến F1.
+2. Ảnh hưởng chính của `max_depth` đến F1.
+3. Tương tác giữa `k` và `max_depth`.
+4. Trung bình và khoảng tin cậy cho từng nhóm.
+5. Cấu hình có F1 trung bình tốt nhất.
+
+### 8.4. Kết quả cần báo cáo
+
+- Bảng F1 trung bình theo từng giá trị `k`.
+- Bảng F1 trung bình theo từng giá trị `max_depth`.
+- Bảng F1 trung bình cho từng tổ hợp `k × max_depth`.
+- Kết quả `lm()` hoặc ANOVA hai yếu tố.
+- Biểu đồ hiệu ứng chính.
+- Biểu đồ tương tác.
+- Nhận xét về ý nghĩa thống kê và ý nghĩa thực tế.
+
+**File chính:**
+
+- `Phase_3_CRFD/03_crfd_baseline.py`
+- `Phase_3_CRFD/03_crfd_improved.py`
+- `Phase_3_CRFD/03_crfd_analysis.py`
+- `Phase_3_CRFD/crfd_results.csv`
+
+---
+
+## 9. Phase 4: Viết báo cáo
+
+**Mục tiêu:** tổng hợp phương pháp, thiết kế thực nghiệm, kết quả và thảo luận thành báo cáo cuối cùng.
+
+### 9.1. Cấu trúc báo cáo đề xuất
+
 1. **Giới thiệu**
-   - Bối cảnh vấn đề và động lực
-   - Mô tả bộ dữ liệu
-   - Câu hỏi nghiên cứu
+   - Bối cảnh bài toán churn prediction.
+   - Mục tiêu nghiên cứu.
+   - Mô tả ngắn về dữ liệu.
 
-2. **Phương pháp**
-   - Tổng quan thuật toán Random Forest
-   - Thiết kế thực nghiệm (CRD và CRFD)
-   - Phương pháp phân tích thống kê
+2. **Dữ liệu và tiền xử lý**
+   - Mô tả biến.
+   - Kiểm tra thiếu dữ liệu.
+   - Phân bố lớp `churn`.
+   - Mã hóa biến phân loại.
+   - Phân tích tương quan và lý do giữ/loại biến.
 
-3. **Kết quả**
-   - Hiệu suất mô hình cơ sở
-   - Kết quả thực nghiệm CRD
-   - Kết quả thực nghiệm CRFD
-   - Kiểm tra thống kê và trực quan hóa
+3. **Phương pháp mô hình hóa**
+   - Random Forest.
+   - Siêu tham số `max_depth`.
+   - F1-score cho lớp dương `yes`.
+   - Holdout và cross-validation.
 
-4. **Thảo luận**
-   - Giải thích các phát hiện chính
-   - Ứng dụng thực tế
-   - Hạn chế
+4. **Thiết kế thực nghiệm**
+   - CRD với yếu tố `k`.
+   - CRFD với hai yếu tố `k` và `max_depth`.
+   - Random seed và số lần lặp.
 
-5. **Kết luận**
-   - Tóm tắt
-   - Khuyến nghị
+5. **Kết quả và phân tích**
+   - Kết quả mô hình ban đầu.
+   - So sánh các giá trị `max_depth`.
+   - Kết quả CRD.
+   - Kết quả CRFD.
+   - Kết quả `lm()`, khoảng tin cậy và kiểm định thống kê.
 
-**Kết quả giao hàng:**
-- Báo cáo PDF (tối đa 10-15 trang)
-- 2 file CSV với kết quả thực nghiệm (CRD và CRFD)
+6. **Thảo luận**
+   - Vì sao `max_depth` nhỏ cho F1 thấp.
+   - Dấu hiệu overfitting khi `max_depth=None`.
+   - Ý nghĩa thực tế của việc dự đoán lớp `yes`.
+   - Hạn chế của mô hình và thực nghiệm.
 
-**File:**
-- `Phase_4_Report/04_report_generator.py` - Tạo biểu đồ và thống kê
-- `Phase_4_Report/report_template.md` - Mẫu báo cáo
-- Kết quả: `Phase_4_Report/MLC_Churn_Report.pdf`
+7. **Kết luận**
+   - Tóm tắt kết quả chính.
+   - Cấu hình tốt nhất theo CV F1.
+   - Hướng cải thiện tiếp theo.
 
----
+### 9.2. Kết quả giao nộp
 
-## Các Tham Số & Yêu Cầu Chính
-
-| Tham Số | Giá Trị |
-|---------|---------|
-| Random Seed | 1234 |
-| Chỉ số Đánh giá | F1 Score (lớp dương = "yes") |
-| Lớp Dương | "yes" (rời mạng) |
-| Chiến Lược Fold | Phân tầng |
-| Giá trị k của CRD | 3, 5, 10 |
-| Lần Lặp CRD | 10 |
-| Giá trị max_depth của CRFD | 3, 5, Không giới hạn |
-| Lần Lặp CRFD | 10 |
-| Siêu tham số RF | Chỉ thay đổi max_depth, các cái khác mặc định |
+- Báo cáo PDF cuối cùng.
+- File kết quả CRD: `crd_results.csv`.
+- File kết quả CRFD: `crfd_results.csv`.
+- Mã nguồn tái lập kết quả.
 
 ---
 
-## Chiến Lược Thực Hiện
+## 10. Các tham số quan trọng
 
-### Mô Hình Cơ Bản → Cải Tiến
-
-Mỗi giai đoạn tuân theo mô hình này:
-1. **Script Cơ Bản** (`*_baseline.py`)
-   - Triển khai tối thiểu, sạch sẽ
-   - Tập trung vào các yêu cầu cốt lõi
-   - Đầu ra và ghi nhật ký rõ ràng
-
-2. **Script Cải Tiến** (`*_improved.py`)
-   - Xác thực và xử lý lỗi nâng cao
-   - Kiểm tra độ bền bổ sung
-   - Trực quan hóa và báo cáo tốt hơn
-
-3. **Script Phân Tích** (`*_analysis.py`)
-   - Kiểm tra thống kê và giải thích
-   - Trực quan hóa toàn diện
-   - Tài liệu kết quả chi tiết
+| Tham số | Giá trị |
+|---|---|
+| Random seed | `1234` |
+| Thuật toán | Random Forest |
+| Siêu tham số thay đổi | `max_depth` |
+| Các siêu tham số khác | Giữ mặc định |
+| Chỉ số đánh giá | F1-score |
+| Lớp dương | `yes` |
+| Chiến lược chia fold | Stratified k-fold |
+| Giá trị `k` trong CRD | `3`, `5`, `10` |
+| Số lần lặp CRD | `10` |
+| Giá trị `max_depth` trong CRFD | `3`, `5`, `None` |
+| Số lần lặp CRFD | `10` |
 
 ---
 
-## Thư Viện Bắt Buộc
+## 11. Thứ tự chạy chương trình
 
-```
-scikit-learn>=1.0.0
-pandas>=1.3.0
-numpy>=1.20.0
-matplotlib>=3.4.0
-seaborn>=0.11.0
-scipy>=1.7.0
-statsmodels>=0.13.0
+Chạy từ thư mục gốc của dự án:
+
+```powershell
+cd "D:\Folder F\phamtuananh@23020010\UET.iSEML\2026.DAE.MLC Churn"
 ```
 
----
-
-## Thứ Tự Thực Hiện
-
-1. **Phase 0:** Chạy EDA để hiểu dữ liệu
-2. **Phase 1:** Xây dựng mô hình cơ sở
-3. **Phase 2:** Thực hiện thực nghiệm CRD
-4. **Phase 3:** Thực hiện thực nghiệm CRFD
-5. **Phase 4:** Tạo báo cáo
-
----
-
-## Danh Sách Kiểm Tra Gửi
-
-- [ ] Phase 0: EDA hoàn tất và dữ liệu được xác thực
-- [ ] Phase 1: Mô hình RF cơ sở với phân tích đặc trưng
-- [ ] Phase 2: Thực nghiệm CRD với kiểm tra Levene và Tukey HSD
-- [ ] Phase 2: CSV kết quả CRD đã lưu
-- [ ] Phase 3: Thực nghiệm CRFD với hiệu ứng chính và tương tác
-- [ ] Phase 3: CSV kết quả CRFD đã lưu
-- [ ] Phase 4: Báo cáo PDF đã tạo
-- [ ] Tất cả mã chạy không có lỗi
-- [ ] Kết quả có thể tái tạo với seed=1234
-
----
-
-## Bắt Đầu Nhanh
+Sau đó chạy lần lượt:
 
 ```bash
-# Phase 0: Khám phá dữ liệu
+# Phase 0: EDA và tiền xử lý
 python Phase_0_EDA/00_eda_baseline.py
+python Phase_0_EDA/00_eda_improved.py
 
-# Phase 1: Xây dựng mô hình
+# Phase 1: Xây dựng và đánh giá mô hình
 python Phase_1_Model/01_model_baseline.py
+python Phase_1_Model/01_model_improved.py
 
 # Phase 2: Thực nghiệm CRD
 python Phase_2_CRD/02_crd_baseline.py
@@ -362,20 +457,58 @@ python Phase_3_CRFD/03_crfd_analysis.py
 python Phase_4_Report/04_report_generator.py
 ```
 
----
+Nếu đang đứng trực tiếp trong `Phase_1_Model`, có thể chạy:
 
-## Ghi Chú
-
-- Tất cả random seed phải được đặt thành **1234**
-- Sử dụng **k-fold phân tầng** để xử lý mất cân bằng lớp
-- Báo cáo **giá trị trung bình và khoảng tin cậy** trong tất cả so sánh
-- Bao gồm cả **ý nghĩa thống kê** và **ý nghĩa thực tế**
-- Tạo tất cả các biểu đồ bắt buộc với nhãn và chú thích rõ ràng
-- Lưu kết quả trung gian để tái tạo
+```powershell
+python .\01_model_baseline.py
+python .\01_model_improved.py
+```
 
 ---
 
-**Cập nhật lần cuối:** 2026-05-23  
-**Trạng thái:** Kế hoạch dự án sẵn sàng - Sẵn sàng bắt đầu Phase 0
-#   M L C - C h u r n  
- 
+## 12. Câu diễn giải có thể dùng trong báo cáo
+
+### 12.1. Về hiệu năng mô hình
+
+Mô hình Random Forest đạt F1 trung bình qua cross-validation khoảng `0.744` với khoảng tin cậy 95% là `[0.711, 0.777]`. F1 trên tập holdout đạt khoảng `0.792`. Tuy nhiên, F1 trên tập huấn luyện gần bằng 1, cho thấy mô hình có xu hướng overfitting. Vì vậy, kết quả cross-validation được ưu tiên sử dụng để đánh giá khả năng tổng quát hóa.
+
+### 12.2. Về so sánh baseline và improved
+
+Khoảng tin cậy 95% của hệ số `modelimproved` là `[-0.039, 0.039]`, có chứa 0. Do đó, chưa có bằng chứng thống kê để khẳng định phiên bản improved tạo ra cải thiện F1 rõ rệt so với baseline. Hai phiên bản có thể được xem là có hiệu năng tương đương trong phạm vi thực nghiệm hiện tại.
+
+### 12.3. Về lựa chọn `max_depth`
+
+Trong các giá trị `max_depth` được so sánh, `max_depth=None` đạt CV F1 trung bình cao nhất. Tuy nhiên, Train F1 bằng 1.0 cho thấy mô hình có dấu hiệu overfitting. Các giá trị `max_depth` nhỏ như 3 hoặc 5 làm mô hình quá đơn giản, gần như không nhận diện được lớp churn `yes`, dẫn đến F1 rất thấp.
+
+---
+
+## 13. Danh sách kiểm tra trước khi nộp
+
+- [ ] Đã chạy EDA và lưu dữ liệu tiền xử lý.
+- [ ] Đã phân tích tương quan và giải thích việc giữ/loại biến.
+- [ ] Đã xây dựng mô hình Random Forest với `random_state=1234`.
+- [ ] Đã đánh giá bằng F1-score với lớp dương `yes`.
+- [ ] Đã so sánh các giá trị `max_depth`.
+- [ ] Đã thực hiện CRD với các giá trị `k = 3, 5, 10`.
+- [ ] Đã thực hiện Levene test và Tukey HSD khi cần.
+- [ ] Đã thực hiện CRFD với các yếu tố `k` và `max_depth`.
+- [ ] Đã phân tích hiệu ứng chính và tương tác.
+- [ ] Đã báo cáo trung bình và khoảng tin cậy 95% trong các so sánh.
+- [ ] Đã tạo biểu đồ cần thiết.
+- [ ] Đã tạo báo cáo PDF cuối cùng.
+- [ ] Tất cả kết quả có thể tái lập với seed `1234`.
+
+---
+
+## 14. Ghi chú quan trọng
+
+- Không nên kết luận mô hình improved tốt hơn baseline nếu khoảng tin cậy của hệ số so sánh còn chứa 0.
+- Không nên chọn mô hình chỉ dựa trên Train F1 vì Train F1 cao có thể là dấu hiệu overfitting.
+- Với dữ liệu mất cân bằng lớp, F1-score của lớp `yes` có ý nghĩa hơn accuracy.
+- Khi `max_depth` quá nhỏ, mô hình có thể dự đoán rất ít hoặc không dự đoán lớp `yes`, khiến F1 gần 0.
+- Trong báo cáo, cần phân biệt rõ **ý nghĩa thống kê** và **ý nghĩa thực tế**.
+
+---
+
+**Cập nhật lần cuối:** 2026-05-27  
+**Trạng thái:** Đã cập nhật theo kết quả Phase 1 và yêu cầu phân tích thực nghiệm.
