@@ -291,29 +291,3 @@ write.csv(
   file.path(output_dir, "metrics_model_prun_state_by_max_depth.csv"),
   row.names = FALSE
 )
-
-# Model v2: prune area_code, keep state
-data_prun_area_code <- prepare_prun_area_code(df)
-results_prun_area_code <- run_rf_experiment(
-  X = data_prun_area_code$X,
-  y = data_prun_area_code$y,
-  model_name = "model_prun_area_code",
-  output_dir = output_dir
-)
-
-write.csv(
-  results_prun_area_code,
-  file.path(output_dir, "metrics_model_prun_area_code_by_max_depth.csv"),
-  row.names = FALSE
-)
-
-# Gộp kết quả
-all_results <- bind_rows(results_prun_state, results_prun_area_code)
-
-write.csv(
-  all_results,
-  file.path(output_dir, "metrics_prun_state_vs_prun_area_code.csv"),
-  row.names = FALSE
-)
-
-print(all_results)
