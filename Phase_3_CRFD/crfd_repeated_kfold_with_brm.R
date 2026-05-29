@@ -20,11 +20,11 @@ library(brms)
 
 set.seed(1234)
 getwd()
-setwd('D:/Folder F/phamtuananh@23020010/UET.iSEML/2026.DAE.MLC-Churn/MLC-Churn')
+setwd('/media/dainn98/New Volume/Folder F/phamtuananh@23020010/UET.iSEML/2026.DAE.MLC-Churn/MLC-Churn')
 # ============================================================
 # 1. CONFIG
 # ============================================================
-output_dir <- "Phase_3_CFRD/outputs"
+output_dir <- "Phase_3_CRFD/outputs"
 input_csv <- "mlc_churn.csv"
 
 
@@ -48,7 +48,7 @@ num_trees_fixed <- 500
 # Bayesian comparison bang brms.
 # Luu y: brms can cai Stan backend, nen lan dau chay co the mat thoi gian.
 # Neu may chua cai brms/cmdstanr/rstan, co the de FALSE de bo qua phan Bayesian.
-use_brms <- FALSE
+use_brms <- TRUE
 brms_iter <- 4000
 brms_warmup <- 1000
 brms_chains <- 4
@@ -463,3 +463,66 @@ ggsave(
   height = 5,
   dpi = 300
 )
+
+
+# ============================================================
+# 7. CRFD BAYESIAN ANALYSIS BANG brm()
+#    Kiem tra anh huong cua k, max_depth va tuong tac k:max_depth
+# ============================================================
+
+if (use_brms) {
+  
+  cat("\n========================================\n")
+  cat("Running Bayesian CRFD model with brm()\n")
+  cat("Formula: f1 ~ k * max_depth\n")
+  cat("========================================\n")
+  
+  brm_crfd <- brm(
+    formula = f1 ~ k * max_depth,
+    data = crfd_results,
+    family = gaussian(),
+    iter = brms_iter,
+    warmup = brms_warmup,
+    chains = brms_chains,
+    cores = brms_cores,
+    seed = random_seed
+  )
+  
+  brm_crfd_summary <- summary(brm_crfd)
+  print(brm_crfd_summary)
+  
+  capture.output(
+    brm_crfd_summary,
+    file = file.path(output_dir, "crfd_brm_summary.txt")
+  )
+  
+  # Luu model de lan sau doc lai, khong can fit lai
+  saveRDS(
+    brm_crfd,
+    file = file.path(output_dir, "crfd_brm_model.rds")
+  )
+  
+  # Lay bang he so Bayesian
+  brm_fixed_effects <- fixef(brm_crfd) %>%
+    as.data.frame() %>%
+    rownames_to_column("term")
+  
+  write.csv(
+    brm_fixed_effects,
+    file.path(output_dir, "crfd_brm_fixed_effects.csv"),
+    row.names = FALSE
+  )
+  
+  print(brm_fixed_effects)
+  
+  # Ve conditional effects
+  brm_conditional_effects <- conditional_effects(brm_crfd)
+  
+  png(
+    filename = file.path(output_dir, "crfd_brm_conditional_effects.png"),
+    width = 1200,
+    height = 800
+  )
+  plot(brm_conditional_effects, ask = FALSE)
+  dev.off()
+}

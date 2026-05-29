@@ -1,0 +1,29 @@
+Bayesian model for CRFD
+Formula: brm(f1 ~ k * max_depth)
+
+ Family: gaussian 
+  Links: mu = identity 
+Formula: f1 ~ k * max_depth 
+   Data: crfd_results (Number of observations: 540) 
+  Draws: 4 chains, each with iter = 4000; warmup = 1000; thin = 1;
+         total post-warmup draws = 12000
+
+Regression Coefficients:
+                     Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept                0.15      0.01     0.13     0.17 1.00     3566     5999
+kkEQ5                   -0.01      0.01    -0.04     0.01 1.00     3951     5953
+kkEQ10                   0.06      0.01     0.04     0.09 1.00     3677     6139
+max_depth5               0.32      0.02     0.29     0.35 1.00     3765     5914
+max_depthNone            0.67      0.02     0.64     0.70 1.00     3484     5728
+kkEQ5:max_depth5         0.03      0.02    -0.01     0.07 1.00     4172     6500
+kkEQ10:max_depth5       -0.04      0.02    -0.07    -0.01 1.00     3891     6390
+kkEQ5:max_depthNone      0.02      0.02    -0.02     0.06 1.00     3922     6495
+kkEQ10:max_depthNone    -0.06      0.02    -0.09    -0.02 1.00     3673     6211
+
+Further Distributional Parameters:
+      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sigma     0.06      0.00     0.06     0.06 1.00    10676     7606
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).

@@ -1,0 +1,34 @@
+Linear model and ANOVA for CRD
+Formula: lm(f1 ~ k)
+
+
+Call:
+lm(formula = f1 ~ k, data = crd_results)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.116887 -0.019876  0.000165  0.022951  0.086321 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept) 0.815711   0.006132 133.035   <2e-16 ***
+kk=5        0.004166   0.007756   0.537    0.592    
+kk=10       0.007059   0.006991   1.010    0.314    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.03358 on 177 degrees of freedom
+Multiple R-squared:  0.006013,	Adjusted R-squared:  -0.005218 
+F-statistic: 0.5354 on 2 and 177 DF,  p-value: 0.5864
+
+
+ANOVA table:
+             Df  Sum Sq   Mean Sq F value Pr(>F)
+k             2 0.00121 0.0006039   0.535  0.586
+Residuals   177 0.19964 0.0011279               
+
+95% confidence intervals for coefficients:
+                   2.5 %     97.5 %
+(Intercept)  0.803610197 0.82781097
+kk=5        -0.011140211 0.01947162
+kk=10       -0.006737318 0.02085581

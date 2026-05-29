@@ -1,0 +1,18 @@
+Levene's Test for CRFD
+1) Compare variance across 9 treatment cells k:max_depth
+
+Levene's Test for Homogeneity of Variance (center = median)
+       Df F value    Pr(>F)    
+group   8  12.247 3.827e-16 ***
+      531                      
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+2) Compare variance across k within each max_depth
+
+# A tibble: 3 × 4
+  max_depth    df f_value  p_value
+  <chr>     <int>   <dbl>    <dbl>
+1 3             2   0.112 0.894   
+2 5             2   8.96  0.000196
+3 None          2   6.82  0.00140 

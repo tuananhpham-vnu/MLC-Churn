@@ -1,0 +1,23 @@
+Bayesian model for CRD
+Formula: brm(f1 ~ k)
+
+ Family: gaussian 
+  Links: mu = identity 
+Formula: f1 ~ k 
+   Data: crd_results (Number of observations: 180) 
+  Draws: 4 chains, each with iter = 4000; warmup = 1000; thin = 1;
+         total post-warmup draws = 12000
+
+Regression Coefficients:
+          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+Intercept     0.82      0.01     0.80     0.83 1.00     7547     7466
+kkEQ5         0.00      0.01    -0.01     0.02 1.00     7491     7610
+kkEQ10        0.01      0.01    -0.01     0.02 1.00     7628     7061
+
+Further Distributional Parameters:
+      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+sigma     0.03      0.00     0.03     0.04 1.00     8210     7828
+
+Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+and Tail_ESS are effective sample size measures, and Rhat is the potential
+scale reduction factor on split chains (at convergence, Rhat = 1).

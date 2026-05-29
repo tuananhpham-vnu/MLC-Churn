@@ -1,0 +1,50 @@
+Linear model and ANOVA for CRFD
+Formula: lm(f1 ~ k * max_depth)
+
+
+Call:
+lm(formula = f1 ~ k * max_depth, data = crfd_results)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.186159 -0.032487  0.002627  0.034179  0.226381 
+
+Coefficients:
+                    Estimate Std. Error t value Pr(>|t|)    
+(Intercept)          0.14905    0.01080  13.800  < 2e-16 ***
+kk=5                -0.01402    0.01366  -1.026  0.30535    
+kk=10                0.06369    0.01231   5.172 3.29e-07 ***
+max_depth5           0.32473    0.01527  21.260  < 2e-16 ***
+max_depthNone        0.66667    0.01527  43.647  < 2e-16 ***
+kk=5:max_depth5      0.02769    0.01932   1.433  0.15234    
+kk=10:max_depth5    -0.04178    0.01742  -2.399  0.01678 *  
+kk=5:max_depthNone   0.01818    0.01932   0.941  0.34707    
+kk=10:max_depthNone -0.05663    0.01742  -3.252  0.00122 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.05916 on 531 degrees of freedom
+Multiple R-squared:  0.9524,	Adjusted R-squared:  0.9517 
+F-statistic:  1327 on 8 and 531 DF,  p-value: < 2.2e-16
+
+
+ANOVA table:
+             Df Sum Sq Mean Sq  F value   Pr(>F)    
+k             2   0.12   0.060   17.260 5.46e-08 ***
+max_depth     2  36.91  18.454 5273.324  < 2e-16 ***
+k:max_depth   4   0.13   0.032    9.203 3.40e-07 ***
+Residuals   531   1.86   0.003                      
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+95% confidence intervals for coefficients:
+                          2.5 %       97.5 %
+(Intercept)          0.12782859  0.170262156
+kk=5                -0.04085433  0.012820359
+kk=10                0.03949846  0.087880168
+max_depth5           0.29472297  0.354733090
+max_depthNone        0.63666015  0.696670272
+kk=5:max_depth5     -0.01026057  0.065646903
+kk=10:max_depth5    -0.07599118 -0.007569111
+kk=5:max_depthNone  -0.01977105  0.056136420
+kk=10:max_depthNone -0.09084110 -0.022419035

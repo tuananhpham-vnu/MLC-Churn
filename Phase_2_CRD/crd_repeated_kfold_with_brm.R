@@ -18,7 +18,9 @@ library(brms)
 
 set.seed(1234)
 getwd()
-setwd('D:/Folder F/phamtuananh@23020010/UET.iSEML/2026.DAE.MLC-Churn/MLC-Churn')
+#setwd('D:/Folder F/phamtuananh@23020010/UET.iSEML/2026.DAE.MLC-Churn/MLC-Churn')
+setwd('/media/dainn98/New Volume/Folder F/phamtuananh@23020010/UET.iSEML/2026.DAE.MLC-Churn/MLC-Churn')
+
 # ============================================================
 # 1. CONFIG
 # ============================================================
@@ -41,13 +43,13 @@ n_repeats <- 10
 # Bai 2 chi xet anh huong cua k, nen giu co dinh mo hinh M.
 # Theo ket qua bai 1, neu max_depth = None tot nhat thi de NA.
 # Neu mo hinh M cua ban chon max_depth = 10 hoac 5, doi thanh 10 hoac 5.
-max_depth_fixed <- 3
+max_depth_fixed <- NA
 num_trees_fixed <- 500
 
 # Bayesian comparison bang brms.
 # Luu y: brms can cai Stan backend, nen lan dau chay co the mat thoi gian.
 # Neu may chua cai brms/cmdstanr/rstan, co the de FALSE de bo qua phan Bayesian.
-use_brms <- FALSE
+use_brms <- TRUE
 brms_iter <- 4000
 brms_warmup <- 1000
 brms_chains <- 4
@@ -549,3 +551,4 @@ cat("- crd_tukey_hsd.csv / .txt\n")
 cat("- crd_group_comparison_tukey_letters.png\n")
 cat("- crd_tukey_pairwise_ci.png\n")
 cat("- crd_brm_summary.txt, crd_brm_group_summary_by_k.csv, crd_brm_pairwise_differences.csv neu use_brms = TRUE va brms da cai thanh cong\n")
+

@@ -1,0 +1,13 @@
+TukeyHSD pairwise comparison for CRD
+
+  Tukey multiple comparisons of means
+    95% family-wise confidence level
+
+Fit: aov(formula = f1 ~ k, data = crd_results)
+
+$k
+                diff          lwr        upr     p adj
+k=5-k=3  0.004165702 -0.014166099 0.02249750 0.8531615
+k=10-k=3 0.007059245 -0.009464817 0.02358331 0.5716870
+k=10-k=5 0.002893543 -0.010855308 0.01664239 0.8726284
+
